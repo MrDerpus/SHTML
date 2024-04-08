@@ -1,0 +1,8 @@
+html
+	head
+		title "TITLE HERE"
+		stylesheet "styles.css"
+		script "scripts.js" | onload="functions();"
+	body "" | style="colour:#f00; background-colour:#000;"
+		h1 "Hello, World" | id="idName"
+$exit

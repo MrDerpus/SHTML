@@ -1,0 +1,8 @@
+class HASH:
+	
+	NO_INPUT_FILE:str  = '509bb0bcae3e762ece6891ce4d34a841'
+	NO_OUTPUT_FILE:str = 'f4d6cc0dc0dd99d177b8253bf1e43c6f'
+	NO_USER_INPUT:str  = '75e2c40ffa5b937511e96840b56a4a7a'
+
+	COMMENT:str = 'f2cd320b55767434dd48d81b165ea956'
+	IGNORE:str  = 'a2e843feab94ef623fea888f07c28696'
