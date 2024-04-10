@@ -1,8 +1,17 @@
+// This HTML file was written in SHTML was compiled back
+// into HTML.  This is a proper test of the SHTML 'language'.
 html
 	head
-		title "TITLE HERE"
-		stylesheet "styles.css"
-		script "scripts.js" | onload="functions();"
-	body "" | style="colour:#f00; background-colour:#000;"
-		h1 "Hello, World" | id="idName"
+		title "PAGE"
+		/ script "scripts.js" | onload="functions();"
+		/ stylesheet "styles.css"
+body "" | style = "colour:#fff; background-colour:#222;"
+	div "" | id="idName" style="text-align:center;"
+		h1 "Hello" | style="colour:#f00;"
+		h2 "World" | style="colour:#ff0;"
+		h3 "Foo /n Bar" | style="colour:#0ff;"
+		p  "Test"  | style="colour:#0f0;"
+	$close
+	$sep "~"
+	h2 "This seems quite Cool :]" ~ id="idName"
 $exit
