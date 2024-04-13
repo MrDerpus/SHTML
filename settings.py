@@ -21,6 +21,7 @@ class HASH: # Hashes, because it's very unlikely for a person to type in a full 
 	NO_INPUT_FILE:str  = '509bb0bcae3e762ece6891ce4d34a841'
 	NO_OUTPUT_FILE:str = 'f4d6cc0dc0dd99d177b8253bf1e43c6f'
 	NO_USER_INPUT:str  = '75e2c40ffa5b937511e96840b56a4a7a'
+	NON_EXISTENT_FILE:str = '948861a776811a7fd34ae2e73ee2adee'
 
 	IGNORE:str  = 'a2e843feab94ef623fea888f07c28696'
 
@@ -41,6 +42,7 @@ class VALID: # Valid HTML tags and language commands.
 	# HTML tags that are not self closing, but DON'T need intervention. Example: <h1 id="idName">Hello World!</h1>
 	HTML_INTERVENTION:list = ['title', 'h1','h2','h3','h4','h5','h6','p','b','s','u', 'a']
 
+	# Blocked HTML tags.
 	HTML_BLOCKED:list = ['style']
 
 	#HTML_CUSTOM:dict = {'style':'<link rel="stylesheet" type="text/css" href="{innerText}" />', }
