@@ -1,0 +1,18 @@
+body#id
+{
+	background-color: #000;
+	color: #fff;
+}
+
+
+
+#id-1 { color: #f00; }
+#id-2 { color: #ff0; }
+#id-3 { color: #00f; }
+#id-4 { color: #0ff; }
+#id-5 { color: #0f0; }
+#id-6 { color: #f0f; }
+
+
+
+div.cen { text-align: center; }

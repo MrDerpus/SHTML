@@ -1,6 +1,19 @@
 html
 	head
-		//test
+		title | lol
+		stylesheet | styles.css
 
-	body
-		h1.class|Hello
+	body.class#id
+		//h2.class|Hello World
+		h1#id-1|Hello World!
+		h2 #id-2|Hello World!
+		h3 #id-3 |Hello World!
+		h4 #id-4 | Hello World!
+
+		div.cen
+			h5#id-5|Hello World!
+			h6#id-6|Hello World! ~;
+
+		$sep | "%"
+		$sep % "|"	
+		p|Hello World! /n lol

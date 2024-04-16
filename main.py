@@ -4,21 +4,27 @@ Author: MrDerpus
 
 Version: 2.0.0 -A
 
+NOTE:
 EMMET LIKE SYNTAX TEST
 
 
+- Removed unnecessary code.
++ Added unnecessary code, which is to be removed in the next few versions.
++ Completely changed the syntax of the language.
+	- SiHTML syntax now imitates EMMET like syntax, making for MUCH shorter & easy to read code.
+
+x All $commands and tags require the syntax separator to take values.
+  This will be changed in the next fewer versions.
+
+
 Dev conditions:
-Windows 10 / Fedora 38
-Python 3.12.2
-
-
-Tested Compatible OS's:
-Windows 10
-Fedora  38
+Fedora  38 Python 3.12.1
+Windows 10 Python 3.12.2
 
 
 Description: 
-Simple HTML (SHTML).
+Simple HTML (SiHTML).
+
 
 
 '''
@@ -122,99 +128,88 @@ def build(input_file:str, output_file:str):
 			if(comment and line[0] == COMMENTS.SINGLE_LINE_SCRIPT):  # comment for script itself.
 				keyword = HASH.COMMENT
 				converted_line = ''
+			else:
+				keyword = ''
 			
 			if(comment and line[0:2] == COMMENTS.SINGLE_LINE_HTML): # html comment.
 				keyword = HASH.COMMENT
 				innerText = line[2:].lstrip().rstrip()
-				
+			else:
+				keyword = ''
 
-			# if line is blank, set line to be ignored
-			if(len(line) <= 0): keyword = HASH.IGNORE
-
-
-			# Error: unrecognised keyword / command
-			if(keyword != HASH.COMMENT and keyword != HASH.IGNORE): # WHY DOES 'OR' NOT WORK??????
-				if(keyword not in VALID.VALID):
-					ERROR(f'Unknown keyword or command \'{keyword}\'', line_count, 'The keyword you specified is invalid, please check you spelling.', False)
-
-
-
-			# ---
 
 			# Are class and id called in line?
 			# If so, then grab strong positions
 			# and set bools to true. If not, set
 			# bools to false. 
-			if '.' in line.split('|')[0]:
+			if('.' in line.split(SYNTAX.SEPARATOR)[0]):
 				dic['.'] = line.find('.')
 				classInLine = True
 			else:
 				classInLine = False
 
 
-			if '#' in line.split('|')[0]:
+			if('#' in line.split(SYNTAX.SEPARATOR)[0]):
 				dic['#'] = line.find('#')
 				idInLine = True
 			else:
 				idInLine = False
-			
 
 
 			# Grab keyword
-			try:
-				keyword = line[0:sorted(dic.values())[0]].lstrip().rstrip()
-			except:
-				keyword = line.split('|')[0].lstrip().rstrip()
+			if(keyword != HASH.COMMENT):
+				try:
+					keyword = line[0:sorted(dic.values())[0]].lstrip().rstrip()
+				except:
+					keyword = line.split(SYNTAX.SEPARATOR)[0].lstrip().rstrip().lower()
 
 
 
 			# Grab InnerText
 			try:
-				innerText = line.split('|')[1].lstrip().rstrip()
+				innerText = line.split(SYNTAX.SEPARATOR)[1].lstrip().rstrip()
 			except:
 				innerText = ''
 
 
 			# Grab tag elements
-			tagArguments = line.replace(keyword, '').split('|')[0].lstrip().rstrip()
+			tagArguments = line.replace(keyword, '').split(SYNTAX.SEPARATOR)[0].lstrip().rstrip()
 			tagArguments = tagArguments.replace(' ', '')
 			#print(tagArguments)
 
 
-			# duble handle to make sure either in in the line.
-			if classInLine: dic['.'] = tagArguments.find('.')
+			# double handle to make sure either in in the line.
+			if classInLine: dic[SYNTAX.CLASS] = tagArguments.find(SYNTAX.CLASS)
 
-			if idInLine: dic['#'] = tagArguments.find('#')
-
-
+			if idInLine: dic[SYNTAX.ID] = tagArguments.find(SYNTAX.ID)
 
 
-			# If CLASS position value is less than the ID positsion value,
+
+
+			# If CLASS position value is less than the ID position value,
 			# grab then grab CLASS value first and then ID value.
 			# and Vice versa. This is purely for esthetics.
 			if classInLine and idInLine == True: 
-				if(dic['.'] <= dic['#']):
+				if(dic[SYNTAX.CLASS] <= dic[SYNTAX.ID]):
 					#print(tagArguments.split('#'))
-					idName = tagArguments.split('#')[1]
-					c.print(dic.values())
+					idName = tagArguments.split(SYNTAX.ID)[1]
 
-					className = tagArguments[1:dic['#']]
+					className = tagArguments[1:dic[SYNTAX.ID]]
 					_tagArguments = f'class="{className}" id="{idName}"'
 
 				else:
-					className = tagArguments.split('.')[1]
-					c.print(dic.values())
+					className = tagArguments.split(SYNTAX.CLASS)[1]
 
-					idName = tagArguments[1:dic['.']]
+					idName = tagArguments[1:dic[SYNTAX.CLASS]]
 					_tagArguments = f'id="{idName}" class="{className}"'
 
 			# if only class
-			elif classInLine == True:
+			elif classInLine == True and idInLine == False:
 				className = tagArguments[1:]
 				_tagArguments = f'class="{className}"'
 
 			# if only id
-			elif idInLine == True:
+			elif idInLine == True and classInLine == False:
 				idName = tagArguments[1:]
 				_tagArguments = f'id="{idName}"'
 
@@ -222,8 +217,8 @@ def build(input_file:str, output_file:str):
 			else:
 				_tagArguments = f''
 
-
-			# @@@@@@@@ ^^^
+			tag_args = _tagArguments
+			# ----------------------------
 
 
 			# Output tags depending on the type as defined.
@@ -233,8 +228,8 @@ def build(input_file:str, output_file:str):
 
 			elif(keyword in VALID.HTML_INTERVENTION):
 				
-				if(SYNTAX.CLOSE in tag_args): # closing tag
-					tag_args = tag_args.replace(SYNTAX.CLOSE, '')
+				if(SYNTAX.CLOSE in innerText): # closing tag
+					innerText = innerText.replace(SYNTAX.CLOSE, '')
 					innerText += f'</{previous_keyword}>'
 
 				converted_line = f'<{keyword} {tag_args}>{innerText}</{keyword}>'
@@ -247,27 +242,54 @@ def build(input_file:str, output_file:str):
 					previous_keyword = keyword
 
 
+			elif(keyword in VALID.HTML_CUSTOM):
+				custom = keyword
+
+				match custom:
+					case 'html':
+						converted_line = '<!DOCTYPE html>\n<html>'
+					
+					case 'script':
+						converted_line = f'<script src="{innerText}" {tag_args}></script>'
+					
+					case 'stylesheet':
+						converted_line = f'<link rel="stylesheet" type="text/css" href="{innerText}" />'
+
+					case 'body':
+						converted_line = f'</head>\n<body {tag_args}>'
+
+
+			elif(keyword in VALID.COMMANDS):
+				command = keyword
+				converted_line = ''
+
+				match command:
+					case '$sep':
+						SYNTAX.SEPARATOR = line.split('"')[1]
+			
+					case '$end':
+						SYNTAX.CLOSE = line.split('"')[1]
+
+					case '$html':
+						converted_line = innerText
+
+					case '$exit':
+						sys.exit(0)
+
+
+			elif(keyword == HASH.COMMENT): # comment
+				converted_line = f'<!-- {line[2:]} -->'
+
+			else: # Some unknown error, or a blank space in document.
+				if(len(keyword) > 0):
+					ERROR(f'Unknown keyword or command \'{keyword}\'', line_count, 'The keyword you specified is invalid, please check you spelling.', False)
+				converted_line = ''
 
 
 
 
-			# h1.className#idName%style="color:#f00;"|Hello World
-			# <h1 class="className" id="idName" style="color:#f00;">Hello World</h1>
 
-			# ul #idName > li .className * 5 | 1 | 2 | 3 | 4 | 5 | 6
-			# <ul id="idName">
-			# 	<li class="className">1</li>
-			#  	<li class="className">2</li>
-			#  	<li class="className">3</li>
-			#  	<li class="className">4</li>
-			#  	<li class="className">5</li>
-			# </ul>
-
-
-			# ---
-
-
-
+			dic = {} # refresh dict for fresh new line draw.
 			# Write to file
 			if(len(converted_line) > 0):
 				with open(output_file, 'a') as outfile:
