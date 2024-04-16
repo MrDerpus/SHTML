@@ -1,0 +1,6 @@
+html
+	head
+		//test
+
+	body
+		h1.class|Hello
