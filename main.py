@@ -1,32 +1,40 @@
 '''
 Author: MrDerpus
 
+Version: 2.0.1 -A
 
-Version: 2.0.0 -A
-
-NOTE:
-EMMET LIKE SYNTAX TEST
-
-
-- Removed unnecessary code.
-+ Added unnecessary code, which is to be removed in the next few versions.
-+ Completely changed the syntax of the language.
-	- SiHTML syntax now imitates EMMET like syntax, making for MUCH shorter & easy to read code.
-
-x All $commands and tags require the syntax separator to take values.
-  This will be changed in the next fewer versions.
-
-
-Dev conditions:
+Dev / compatibility conditions:
 Fedora  38 Python 3.12.1
 Windows 10 Python 3.12.2
 
 
-Description: 
-Simple HTML (SiHTML).
++ Added unnecessary code, which is to be removed in the next few versions.
+
++ Fixed a formatting bug that would close the keyword tag before a div tag when outputted.
+
++ Added functionality that allows you to add additional tag arguments with the tag attribute
+syntax separator.
 
 
+x Some tags will have 'whitespace' artifacting in the tag elements.
+This has no affect on the code, it just looks funny.
+This is low priority.
 
+x All $commands and tags require the syntax separator to take values.
+This will be changed in the next fewer versions.
+
+x Added simular confusing variable names; this will be rectified in the next version.
+_tagArguments
+tagArguments
+tag_args
+other_tag_Args
+
+
+? I want to add list support (ol / ul + li).
+I aim to ad this to the next revision.
+
+? I would like to add a HTML formatter, to format the output file.
+I am to add this in the next revision. 
 '''
 
 from rich.traceback import install; install(show_locals = True) # type: ignore
@@ -41,7 +49,7 @@ from settings import HASH, COMMENTS, SYNTAX, VALID
 
 
 #Version program,
-version = '2.0.0 -A'
+version = '2.0.1 -A'
 
 # custom function to test if a string is wrapped in a specific char.
 # remove for version 0.0.3 - never used.
@@ -79,6 +87,8 @@ def build(input_file:str, output_file:str):
 	line_count:int = 1
 	keyword:str = ''
 	previous_keyword:str = ''
+
+	other_tag_Args:str = ''
 	
 	classInLine:bool = False
 	idInLine:bool = False
@@ -139,7 +149,7 @@ def build(input_file:str, output_file:str):
 
 
 			# Are class and id called in line?
-			# If so, then grab strong positions
+			# If so, then grab string positions
 			# and set bools to true. If not, set
 			# bools to false. 
 			if('.' in line.split(SYNTAX.SEPARATOR)[0]):
@@ -165,17 +175,21 @@ def build(input_file:str, output_file:str):
 
 
 
-			# Grab InnerText
+			# Grab innerText
 			try:
 				innerText = line.split(SYNTAX.SEPARATOR)[1].lstrip().rstrip()
+				if(SYNTAX.TAG_ATTRIBUTE in innerText): # is there a tag attribute seq in line?
+					other_tag_Args += f'{innerText.split(SYNTAX.TAG_ATTRIBUTE)[1]}'
+					innerText = innerText.split(SYNTAX.TAG_ATTRIBUTE)[0].lstrip().rstrip()
+
 			except:
 				innerText = ''
+				other_tag_Args = ''
 
 
 			# Grab tag elements
 			tagArguments = line.replace(keyword, '').split(SYNTAX.SEPARATOR)[0].lstrip().rstrip()
 			tagArguments = tagArguments.replace(' ', '')
-			#print(tagArguments)
 
 
 			# double handle to make sure either in in the line.
@@ -217,7 +231,7 @@ def build(input_file:str, output_file:str):
 			else:
 				_tagArguments = f''
 
-			tag_args = _tagArguments
+			tag_args = f'{_tagArguments} {other_tag_Args}'
 			# ----------------------------
 
 
@@ -227,12 +241,13 @@ def build(input_file:str, output_file:str):
 
 
 			elif(keyword in VALID.HTML_INTERVENTION):
-				
-				if(SYNTAX.CLOSE in innerText): # closing tag
-					innerText = innerText.replace(SYNTAX.CLOSE, '')
-					innerText += f'</{previous_keyword}>'
-
 				converted_line = f'<{keyword} {tag_args}>{innerText}</{keyword}>'
+
+				if(SYNTAX.CLOSE in innerText): # closing tag
+					innerText = innerText.replace(SYNTAX.CLOSE, '').lstrip().rstrip()
+					#innerText += f'</{previous_keyword}>'
+
+					converted_line = f'<{keyword} {tag_args}>{innerText}</{keyword}>\n</{previous_keyword}>'
 				
 
 			elif(keyword in VALID.HTML_NON_INTERVENTION):
@@ -253,7 +268,7 @@ def build(input_file:str, output_file:str):
 						converted_line = f'<script src="{innerText}" {tag_args}></script>'
 					
 					case 'stylesheet':
-						converted_line = f'<link rel="stylesheet" type="text/css" href="{innerText}" />'
+						converted_line = f'<link rel="stylesheet" type="text/css" href="{innerText}" {tag_args} />'
 
 					case 'body':
 						converted_line = f'</head>\n<body {tag_args}>'
@@ -290,6 +305,7 @@ def build(input_file:str, output_file:str):
 
 
 			dic = {} # refresh dict for fresh new line draw.
+			other_tag_Args = ''
 			# Write to file
 			if(len(converted_line) > 0):
 				with open(output_file, 'a') as outfile:

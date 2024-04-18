@@ -12,6 +12,7 @@ class SYNTAX: # syntax settings that users can change.
 
 	CLASS:str = '.'
 	ID:str = '#'
+	TAG_ATTRIBUTE:str = '~%'
 
 
 

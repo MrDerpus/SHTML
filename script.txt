@@ -2,18 +2,17 @@ html
 	head
 		title | lol
 		stylesheet | styles.css
+		script.class#id|scripts.js ~% onload="functions();"
 
 	body.class#id
 		//h2.class|Hello World
 		h1#id-1|Hello World!
-		h2 #id-2|Hello World!
+		h2 #id-2|Hello World! ~% style="text-decoration: underline;"
 		h3 #id-3 |Hello World!
 		h4 #id-4 | Hello World!
 
-		div.cen
+		div.cen | ~% style="background-color: #444;"
 			h5#id-5|Hello World!
 			h6#id-6|Hello World! ~;
 
-		$sep | "%"
-		$sep % "|"	
 		p|Hello World! /n lol
