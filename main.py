@@ -1,44 +1,36 @@
 '''
 Author: MrDerpus
 
-Version: 2.0.1 -A
+Version: 2.0.2 -A
 
 Dev / compatibility conditions:
 Fedora  38 Python 3.12.1
 Windows 10 Python 3.12.2
 
 
-+ Added unnecessary code, which is to be removed in the next few versions.
++ Got rid of confusing and similar variable names being called for tag arguments.
 
-+ Fixed a formatting bug that would close the keyword tag before a div tag when outputted.
++ Added shorthand and support for lists (ol + ul).
 
-+ Added functionality that allows you to add additional tag arguments with the tag attribute
-syntax separator.
++ Added the BeautifulSoup4 HTML formatter, which is now built in to the Transpiler;
+and is disabled by default.  The enable, type -f True
 
-
-x Some tags will have 'whitespace' artifacting in the tag elements.
-This has no affect on the code, it just looks funny.
-This is low priority.
 
 x All $commands and tags require the syntax separator to take values.
 This will be changed in the next fewer versions.
 
-x Added simular confusing variable names; this will be rectified in the next version.
-_tagArguments
-tagArguments
-tag_args
-other_tag_Args
+x The child element is unable to receive tag attributes as of yet.
+This is a low priority fix.
 
 
-? I want to add list support (ol / ul + li).
-I aim to ad this to the next revision.
-
-? I would like to add a HTML formatter, to format the output file.
-I am to add this in the next revision. 
+? I want to refactor the custom ERROR function, and make it
+easier to read and use.
 '''
 
 from rich.traceback import install; install(show_locals = True) # type: ignore
 from rich.console   import Console; c = Console() # type: ignore
+
+from bs4 import BeautifulSoup
 
 import click # type: ignore
 
@@ -49,10 +41,11 @@ from settings import HASH, COMMENTS, SYNTAX, VALID
 
 
 #Version program,
-version = '2.0.1 -A'
+version = '2.0.2 -A'
 
 # custom function to test if a string is wrapped in a specific char.
 # remove for version 0.0.3 - never used.
+# Lol it's still here in v2.0.2 -A.
 def isWrapped(string:str, char:str='"'):
 	if(string[0] and string[len(string)-1] != char):
 		return False
@@ -61,7 +54,7 @@ def isWrapped(string:str, char:str='"'):
 	
 
 # Custom error messages printed to the screen.
-def ERROR(ERROR:str='EMPTY STRING', LINE:int = -999, DESCRIPTION:str = 'EMPTY STRING', EXIT:bool = True, EXIT_CODE:int = 1, DISPLAY_TYPE:int = 0):
+def ERROR(ERROR:str='', LINE:int = -999, DESCRIPTION:str = '', EXIT:bool = True, EXIT_CODE:int = 1, DISPLAY_TYPE:int = 0):
 	if(DISPLAY_TYPE == 0): c.print(f' ERROR @ LINE: {LINE} \n {ERROR} \n {DESCRIPTION} \n')
 	elif(DISPLAY_TYPE == 1): c.print(f' {ERROR}')
 
@@ -76,16 +69,17 @@ def cli(): pass
 
 
 @click.command()
-@click.option('--input_file',   '-i',  default = HASH.NO_INPUT_FILE)
-@click.option('--output_file',  '-o',  default = HASH.NO_OUTPUT_FILE)
-def build(input_file:str, output_file:str):
+@click.option('--input_file',  '-i',  default = HASH.NO_INPUT_FILE)
+@click.option('--output_file', '-o',  default = HASH.NO_OUTPUT_FILE)
+@click.option('--formatter',   '-f',  default = False)
+def build(input_file:str, output_file:str, formatter:bool):
 
 	# Var declare 
 	converted_line:str = '' # What gets output to user defined file.
-	innerText:str = '' # 
-	tag_args:str  = ''
-	line_count:int = 1
-	keyword:str = ''
+	innerText:str = '' # Depending on the tag, this could be text or a file.
+	tag_args:str  = '' # Tag arguments / attributes
+	line_count:int = 1 # line number
+	keyword:str = ''   # keyword that gets compared with various keyword lists.
 	previous_keyword:str = ''
 
 	other_tag_Args:str = ''
@@ -188,14 +182,14 @@ def build(input_file:str, output_file:str):
 
 
 			# Grab tag elements
-			tagArguments = line.replace(keyword, '').split(SYNTAX.SEPARATOR)[0].lstrip().rstrip()
-			tagArguments = tagArguments.replace(' ', '')
+			_line = line.replace(keyword, '').split(SYNTAX.SEPARATOR)[0].lstrip().rstrip()
+			_line = _line.replace(' ', '')
 
 
 			# double handle to make sure either in in the line.
-			if classInLine: dic[SYNTAX.CLASS] = tagArguments.find(SYNTAX.CLASS)
+			if classInLine: dic[SYNTAX.CLASS] = _line.find(SYNTAX.CLASS)
 
-			if idInLine: dic[SYNTAX.ID] = tagArguments.find(SYNTAX.ID)
+			if idInLine: dic[SYNTAX.ID] = _line.find(SYNTAX.ID)
 
 
 
@@ -203,35 +197,35 @@ def build(input_file:str, output_file:str):
 			# If CLASS position value is less than the ID position value,
 			# grab then grab CLASS value first and then ID value.
 			# and Vice versa. This is purely for esthetics.
-			if classInLine and idInLine == True: 
+			if(classInLine and idInLine) == True: 
 				if(dic[SYNTAX.CLASS] <= dic[SYNTAX.ID]):
-					#print(tagArguments.split('#'))
-					idName = tagArguments.split(SYNTAX.ID)[1]
+					#print(_line.split('#'))
+					idName = _line.split(SYNTAX.ID)[1]
 
-					className = tagArguments[1:dic[SYNTAX.ID]]
-					_tagArguments = f'class="{className}" id="{idName}"'
+					className = _line[1:dic[SYNTAX.ID]]
+					tag_args = f'class="{className}" id="{idName}"'
 
 				else:
-					className = tagArguments.split(SYNTAX.CLASS)[1]
+					className = _line.split(SYNTAX.CLASS)[1]
 
-					idName = tagArguments[1:dic[SYNTAX.CLASS]]
-					_tagArguments = f'id="{idName}" class="{className}"'
+					idName = _line[1:dic[SYNTAX.CLASS]]
+					tag_args = f'id="{idName}" class="{className}"'
 
 			# if only class
-			elif classInLine == True and idInLine == False:
-				className = tagArguments[1:]
-				_tagArguments = f'class="{className}"'
+			elif(classInLine == True and idInLine == False):
+				className = _line[1:]
+				tag_args = f'class="{className}"'
 
 			# if only id
-			elif idInLine == True and classInLine == False:
-				idName = tagArguments[1:]
-				_tagArguments = f'id="{idName}"'
+			elif(idInLine == True and classInLine == False):
+				idName = _line[1:]
+				tag_args = f'id="{idName}"'
 
 			# if None
 			else:
-				_tagArguments = f''
+				tag_args = f''
 
-			tag_args = f'{_tagArguments} {other_tag_Args}'
+			tag_args = f'{tag_args} {other_tag_Args}'
 			# ----------------------------
 
 
@@ -260,6 +254,26 @@ def build(input_file:str, output_file:str):
 			elif(keyword in VALID.HTML_CUSTOM):
 				custom = keyword
 
+				# Is the line a list?
+				if(custom == 'ol' or custom == 'ul'):
+					child = line.split('>')[1]
+					child = child.split(SYNTAX.SEPARATOR)[0]
+
+					tag_args = tag_args.replace(f'>{child}', '').lstrip().rstrip()
+
+					converted_line = f'<{custom} {tag_args}>\n'
+
+					items = line.split(SYNTAX.SEPARATOR)[1:]
+					for i in range(len(items)): # sanitise items, get rid of whitespace.
+						items[i] = items[i].lstrip().rstrip()
+						converted_line += f'<{child}>{items[i]}</{child}>\n'
+
+					converted_line += f'</{custom}>'
+
+
+				elif(custom == 'favicon'):
+					custom = 'icon'
+
 				match custom:
 					case 'html':
 						converted_line = '<!DOCTYPE html>\n<html>'
@@ -269,6 +283,9 @@ def build(input_file:str, output_file:str):
 					
 					case 'stylesheet':
 						converted_line = f'<link rel="stylesheet" type="text/css" href="{innerText}" {tag_args} />'
+
+					case 'icon':
+						converted_line = f'<link rel="icon" type="image/x-icon" href="{innerText}" />'
 
 					case 'body':
 						converted_line = f'</head>\n<body {tag_args}>'
@@ -295,10 +312,13 @@ def build(input_file:str, output_file:str):
 			elif(keyword == HASH.COMMENT): # comment
 				converted_line = f'<!-- {line[2:]} -->'
 
+			elif(keyword == HASH.IGNORE):
+				converted_line = '\n'
+
 			else: # Some unknown error, or a blank space in document.
 				if(len(keyword) > 0):
 					ERROR(f'Unknown keyword or command \'{keyword}\'', line_count, 'The keyword you specified is invalid, please check you spelling.', False)
-				converted_line = ''
+				converted_line = '\n'
 
 
 
@@ -321,7 +341,21 @@ def build(input_file:str, output_file:str):
 		with open(output_file, 'a') as outfile:
 			outfile.write('</body>\n</html>')
 			
-			
+		
+
+
+
+		# Beautiful Soup 4 HTML file formatter.
+		if(formatter == True):
+			c.print(' Formatting HTML file . . .', style = '#00ffff')
+			# Read the HTML file
+			with open(output_file, 'r') as f:
+				html_content = f.read()
+
+			# Write the pretty HTML content back to the file
+			with open(output_file, 'w') as f:
+				f.write(BeautifulSoup(html_content, 'html.parser').prettify(formatter = 'html'))
+
 
 
 
@@ -329,5 +363,5 @@ def build(input_file:str, output_file:str):
 cli.add_command(build)
 
 
-if __name__ == '__main__':
+if(__name__ == '__main__'):
 	cli()

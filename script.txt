@@ -2,6 +2,7 @@ html
 	head
 		title | lol
 		stylesheet | styles.css
+		icon | icon.png
 		script.class#id|scripts.js ~% onload="functions();"
 
 	body.class#id
@@ -14,5 +15,9 @@ html
 		div.cen | ~% style="background-color: #444;"
 			h5#id-5|Hello World!
 			h6#id-6|Hello World! ~;
+
+		ul#id-4>li| Hello | World | I hope | this | Works
+
+		ol#id-1>li| Hello | World | I hope | this | Works
 
 		p|Hello World! /n lol

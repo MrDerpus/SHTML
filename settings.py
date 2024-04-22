@@ -36,7 +36,7 @@ class VALID: # Valid HTML tags and language commands.
 	HTML_SELF_CLOSING:list = ['area','base','br','col','embed','hr','img','input','meta','param','source','track','wbr','keygen','command','menuitem','frame']
 
 	# HTML tags that are not self closing, but need intervention. Example: <div id="idName">
-	HTML_NON_INTERVENTION:list = ['div','span','ul', 'head']
+	HTML_NON_INTERVENTION:list = ['div','span', 'head']
 
 	# HTML tags that are not self closing, but DON'T need intervention. Example: <h1 id="idName">Hello World!</h1>
 	HTML_INTERVENTION:list = ['title', 'h1','h2','h3','h4','h5','h6','p','b','s','u', 'a']
@@ -46,7 +46,7 @@ class VALID: # Valid HTML tags and language commands.
 
 	#HTML_CUSTOM:dict = {'style':'<link rel="stylesheet" type="text/css" href="{innerText}" />', }
 	# Tags that are customised in the main.py file
-	HTML_CUSTOM:list = ['stylesheet', 'script', 'html', 'body']
+	HTML_CUSTOM:list = ['stylesheet', 'script', 'html', 'body', 'ol', 'ul', 'li', 'icon', 'favicon']
 
 	# All valid HTML tags. that are specified above.
 	HTML:list = [i for i in HTML_SELF_CLOSING + HTML_NON_INTERVENTION + HTML_INTERVENTION + HTML_CUSTOM]
