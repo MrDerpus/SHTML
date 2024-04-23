@@ -1,38 +1,52 @@
 '''
 Author: MrDerpus
 
-Version: 2.0.2 -A
+Version: 2.1.0 -A
 
 Dev / compatibility conditions:
 Fedora  38 Python 3.12.1
 Windows 10 Python 3.12.2
 
 
-+ Got rid of confusing and similar variable names being called for tag arguments.
+[Very big update.]
 
-+ Added shorthand and support for lists (ol + ul).
++ Removed separate functions to change Syntax separator functions & have 
+replaced them with the them with the '@set' function.
 
-+ Added the BeautifulSoup4 HTML formatter, which is now built in to the Transpiler;
-and is disabled by default.  The enable, type -f True
++ Changed the the start character for functions from '$' to '@'.
+Variables will now use the '$' symbol at the prefix.
+
++ Added variables to the language, and the user can declare and use them
+in scripts.  I plan on adding environment variables next.
+You can declare ints and strings
 
 
-x All $commands and tags require the syntax separator to take values.
-This will be changed in the next fewer versions.
+x All @commands and tags require the syntax separator to take values.
+This will be changed in the next couple of versions.
 
 x The child element is unable to receive tag attributes as of yet.
 This is a low priority fix.
 
 
-? I want to refactor the custom ERROR function, and make it
-easier to read and use.
+? Variables can only be used in the text display as of now, this does not include
+lists either.  I plan to update this so you can use variables anywhere within tags.
+
+? I want to add more HTML tags.
+
+? I want to clean and refactor code where it is needed.
+Including better commenting.
+
+? I want to update the github Readme.md description.
+
+? I want to create a user manual for the language.
 '''
 
-from rich.traceback import install; install(show_locals = True) # type: ignore
-from rich.console   import Console; c = Console() # type: ignore
+from rich.traceback import install; install(show_locals = True)
+from rich.console   import Console; c = Console()
 
 from bs4 import BeautifulSoup
 
-import click # type: ignore
+import click
 
 import sys
 import os
@@ -41,7 +55,7 @@ from settings import HASH, COMMENTS, SYNTAX, VALID
 
 
 #Version program,
-version = '2.0.2 -A'
+version = '2.1.0 -A'
 
 # custom function to test if a string is wrapped in a specific char.
 # remove for version 0.0.3 - never used.
@@ -54,7 +68,7 @@ def isWrapped(string:str, char:str='"'):
 	
 
 # Custom error messages printed to the screen.
-def ERROR(ERROR:str='', LINE:int = -999, DESCRIPTION:str = '', EXIT:bool = True, EXIT_CODE:int = 1, DISPLAY_TYPE:int = 0):
+def ERROR(ERROR:str='', LINE:int = -9, DESCRIPTION:str = '', EXIT:bool = True, EXIT_CODE:int = 1, DISPLAY_TYPE:int = 0):
 	if(DISPLAY_TYPE == 0): c.print(f' ERROR @ LINE: {LINE} \n {ERROR} \n {DESCRIPTION} \n')
 	elif(DISPLAY_TYPE == 1): c.print(f' {ERROR}')
 
@@ -81,6 +95,9 @@ def build(input_file:str, output_file:str, formatter:bool):
 	line_count:int = 1 # line number
 	keyword:str = ''   # keyword that gets compared with various keyword lists.
 	previous_keyword:str = ''
+	user_variables:dict = {'dummy':12345}
+	called_variable = None
+	variable = None
 
 	other_tag_Args:str = ''
 	
@@ -176,7 +193,13 @@ def build(input_file:str, output_file:str, formatter:bool):
 					other_tag_Args += f'{innerText.split(SYNTAX.TAG_ATTRIBUTE)[1]}'
 					innerText = innerText.split(SYNTAX.TAG_ATTRIBUTE)[0].lstrip().rstrip()
 
-			except:
+				if(SYNTAX.VARIABLE in innerText): # is there a variable being called
+					variable = innerText.split(SYNTAX.VARIABLE)[1]
+					called_variable = str(user_variables[variable])
+					innerText = innerText.replace(f'{SYNTAX.VARIABLE}{variable}', called_variable)
+
+			except Exception as err:
+				#print(err)
 				innerText = ''
 				other_tag_Args = ''
 
@@ -291,34 +314,96 @@ def build(input_file:str, output_file:str, formatter:bool):
 						converted_line = f'</head>\n<body {tag_args}>'
 
 
-			elif(keyword in VALID.COMMANDS):
-				command = keyword
+			elif(keyword[1:] in VALID.COMMANDS and keyword[0] == SYNTAX.FUNCTION):
+				command = keyword[1:]
 				converted_line = ''
 
 				match command:
-					case '$sep':
-						SYNTAX.SEPARATOR = line.split('"')[1]
-			
-					case '$end':
-						SYNTAX.CLOSE = line.split('"')[1]
+					case 'set':
+						innerText = line.split()[2]
+						if(innerText in VALID.SYNTAX):
+							value = str(line.split()[3])
+							VALID.SYNTAX[innerText] = value
 
-					case '$html':
+							match innerText: 
+								case 'SYNTAX.SEPARATOR':
+									SYNTAX.SEPARATOR = value
+
+								case 'SYNTAX.CLOSE':
+									SYNTAX.CLOSE = value
+
+								case 'SYNTAX.ID':
+									SYNTAX.ID = value
+
+								case 'SYNTAX.CLASS':
+									SYNTAX.CLASS = value
+
+								case 'SYNTAX.TAG_ATTRIBUTE':
+									SYNTAX.TAG_ATTRIBUTE = value
+
+								case 'SYNTAX.FUNCTION':
+									SYNTAX.FUNCTION = value
+
+								case 'SYNTAX.VARIABLE':
+									SYNTAX.VARIABLE = value
+
+								case 'SYNTAX.CHILD':
+									SYNTAX.CHILD = value
+
+
+					case 'var': # @var | string test = This is a test!
+						line = line.replace('=', ' = ')
+						line = line.replace('+', ' + ')
+						line = line.replace('-', ' - ')
+						variable_type  = line.split()[2]
+						variable_name  = line.split()[3]
+						operator = line.split()[4]
+						variable_value = line.split()[5]
+
+						
+						match variable_type:
+							case 'int':
+								variable_value = int(variable_value)
+
+							case 'string':
+								variable_value = line.split('"')[1]
+								variable_value = variable_value.replace('"', '')
+								variable_value = str(variable_value)
+
+						if(operator == '='):
+							user_variables[variable_name] = variable_value
+						
+						if(variable_name in user_variables):
+							match operator:
+								case '+':
+									user_variables[variable_name] += variable_value
+
+								case '-':
+									user_variables[variable_name] -= variable_value
+
+
+
+						#c.print(user_variables)
+
+
+
+
+
+					case 'inject':
 						converted_line = innerText
 
-					case '$exit':
+					case 'exit':
 						sys.exit(0)
 
 
 			elif(keyword == HASH.COMMENT): # comment
 				converted_line = f'<!-- {line[2:]} -->'
 
-			elif(keyword == HASH.IGNORE):
-				converted_line = '\n'
 
 			else: # Some unknown error, or a blank space in document.
 				if(len(keyword) > 0):
 					ERROR(f'Unknown keyword or command \'{keyword}\'', line_count, 'The keyword you specified is invalid, please check you spelling.', False)
-				converted_line = '\n'
+				converted_line = ''
 
 
 

@@ -14,6 +14,13 @@ class SYNTAX: # syntax settings that users can change.
 	ID:str = '#'
 	TAG_ATTRIBUTE:str = '~%'
 
+	FUNCTION:str = '@'
+	VARIABLE:str = '$'
+
+	CHILD:str = '>'
+
+
+
 
 
 class HASH: # Hashes, because it's very unlikely for a person to type in a full hash.
@@ -39,7 +46,7 @@ class VALID: # Valid HTML tags and language commands.
 	HTML_NON_INTERVENTION:list = ['div','span', 'head']
 
 	# HTML tags that are not self closing, but DON'T need intervention. Example: <h1 id="idName">Hello World!</h1>
-	HTML_INTERVENTION:list = ['title', 'h1','h2','h3','h4','h5','h6','p','b','s','u', 'a']
+	HTML_INTERVENTION:list = ['title', 'h1','h2','h3','h4','h5','h6','p','b','s','u', 'a', 'label']
 
 	# Blocked HTML tags.
 	HTML_BLOCKED:list = ['style']
@@ -53,9 +60,22 @@ class VALID: # Valid HTML tags and language commands.
 	# ---------------------
  
 
-
 	# Valid language commands -----------
-	COMMANDS:list = ['$sep', '$exit', '$html', '$end', '$close']
+	COMMANDS:list = ['set', 'var', 'inject', 'exit']
+	# -----------------------------------
+
+
+	# Valid language syntax -------------
+	SYNTAX:dict = {
+		'SYNTAX.SEPARATOR':SYNTAX.SEPARATOR,
+		'SYNTAX.CLOSE':SYNTAX.CLOSE,
+		'SYNTAX.ID':SYNTAX.ID,
+		'SYNTAX.CLASS':SYNTAX.CLASS,
+		'SYNTAX.TAG_ATTRIBUTE':SYNTAX.TAG_ATTRIBUTE,
+		'SYNTAX.FUNCTION':SYNTAX.FUNCTION,
+		'SYNTAX.VARIABLE':SYNTAX.VARIABLE,
+		'SYNTAX.CHILD':SYNTAX.CHILD 
+	}
 	# -----------------------------------
 	
 	VALID:list = [i for i in HTML + COMMANDS]

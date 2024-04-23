@@ -3,7 +3,7 @@ html
 		title | lol
 		stylesheet | styles.css
 		icon | icon.png
-		script.class#id|scripts.js ~% onload="functions();"
+		//script.class#id|scripts.js ~% onload="functions();""
 
 	body.class#id
 		//h2.class|Hello World
@@ -12,12 +12,23 @@ html
 		h3 #id-3 |Hello World!
 		h4 #id-4 | Hello World!
 
+		@var | int number = 0
+		p | $number
+
+		@var | int number + 3
+		p | $number
+		h1 #id-2| Custom variables: $dummy ~% style="text-decoration: underline;"
+
+		@set | SYNTAX.CLOSE ~#
+
 		div.cen | ~% style="background-color: #444;"
 			h5#id-5|Hello World!
-			h6#id-6|Hello World! ~;
+			h6#id-6|Hello World! ~#
 
-		ul#id-4>li| Hello | World | I hope | this | Works
+		@set | SYNTAX.CLOSE ~;
 
-		ol#id-1>li| Hello | World | I hope | this | Works
+		ul#id-4>li| Hello | World | I hope | This | Works
+
+		ol#id-1>li| Hello | World | I hope | This | Works
 
 		p|Hello World! /n lol
