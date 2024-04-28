@@ -1,35 +1,36 @@
 '''
 Author: MrDerpus
 
-Version: 2.1.0 -A
+Version: 2.1.1 -A
 
 Dev / compatibility conditions:
 Fedora  38 Python 3.12.1
 Windows 10 Python 3.12.2
 
 
-[Very big update.]
++ Fixed a small bug that would ignore changes made to developer
+defined syntax changes for CLASS and ID.
 
-+ Removed separate functions to change Syntax separator functions & have 
-replaced them with the them with the '@set' function.
++ Added better comments for easier readability.
 
-+ Changed the the start character for functions from '$' to '@'.
-Variables will now use the '$' symbol at the prefix.
++ Removed some variables regarding user defined variables.
 
-+ Added variables to the language, and the user can declare and use them
-in scripts.  I plan on adding environment variables next.
-You can declare ints and strings
++ Refactored code for user declared variables.
+
++ Fixed a bug where the text wouldn't be displayed to the page
+if there was text after a variable in a tag.
 
 
 x All @commands and tags require the syntax separator to take values.
 This will be changed in the next couple of versions.
+@set | SYNTAX.CLASS ..
 
 x The child element is unable to receive tag attributes as of yet.
 This is a low priority fix.
 
-
-? Variables can only be used in the text display as of now, this does not include
+x / ?  Variables can only be used in the text display as of now, this does not include
 lists either.  I plan to update this so you can use variables anywhere within tags.
+
 
 ? I want to add more HTML tags.
 
@@ -39,6 +40,8 @@ Including better commenting.
 ? I want to update the github Readme.md description.
 
 ? I want to create a user manual for the language.
+
+? I want to try and get people to use/test the language.
 '''
 
 from rich.traceback import install; install(show_locals = True)
@@ -55,11 +58,11 @@ from settings import HASH, COMMENTS, SYNTAX, VALID
 
 
 #Version program,
-version = '2.1.0 -A'
+version = '2.1.1 -A'
 
 # custom function to test if a string is wrapped in a specific char.
 # remove for version 0.0.3 - never used.
-# Lol it's still here in v2.0.2 -A.
+# Lol it's still here in v2.1.1 -A.
 def isWrapped(string:str, char:str='"'):
 	if(string[0] and string[len(string)-1] != char):
 		return False
@@ -92,18 +95,21 @@ def build(input_file:str, output_file:str, formatter:bool):
 	converted_line:str = '' # What gets output to user defined file.
 	innerText:str = '' # Depending on the tag, this could be text or a file.
 	tag_args:str  = '' # Tag arguments / attributes
-	line_count:int = 1 # line number
-	keyword:str = ''   # keyword that gets compared with various keyword lists.
-	previous_keyword:str = ''
-	user_variables:dict = {'dummy':12345}
-	called_variable = None
-	variable = None
+	other_tag_Args:str = '' # only used for the '~%' separator keyword.
+	line_count:int = 1 # Line number
+	keyword:str = ''   # Gets compared with various keyword lists.
+	previous_keyword:str = '' # 
 
-	other_tag_Args:str = ''
+	# Variable data, name of, type of, value of, operator assigned to & called.
+	variable = {'name': '', 'type': '', 'value': '', 'operator': '', 'called': ''}
+	user_variables:dict = {} # All user defined variables are stored here.
 	
-	classInLine:bool = False
-	idInLine:bool = False
-	dic:dict = {}
+	# This is all to be refactored, at some point.  Eventually.
+	classInLine:bool = False # Is CLASS being defined?
+	idInLine:bool = False # Is ID being defined?
+	idName:str = '' # What is the name of your id?
+	className:str = '' # What is the name of your class?
+	dic:dict = {} # Only holds positional ints for CLASS and ID separator characters.
 
 	
 	
@@ -141,9 +147,6 @@ def build(input_file:str, output_file:str, formatter:bool):
 		for line in infile:
 			line = line.lstrip().rstrip() # Cleanse line and grab keyword.
 
-
-			
-
 			# is line a comment?
 			comment = len(line) >= 1
 			if(comment and line[0] == COMMENTS.SINGLE_LINE_SCRIPT):  # comment for script itself.
@@ -163,21 +166,25 @@ def build(input_file:str, output_file:str, formatter:bool):
 			# If so, then grab string positions
 			# and set bools to true. If not, set
 			# bools to false. 
-			if('.' in line.split(SYNTAX.SEPARATOR)[0]):
-				dic['.'] = line.find('.')
+			if(SYNTAX.CLASS in line.split(SYNTAX.SEPARATOR)[0]):
+				dic[SYNTAX.CLASS] = line.find(SYNTAX.CLASS)
 				classInLine = True
 			else:
 				classInLine = False
 
 
-			if('#' in line.split(SYNTAX.SEPARATOR)[0]):
-				dic['#'] = line.find('#')
+			if(SYNTAX.ID in line.split(SYNTAX.SEPARATOR)[0]):
+				dic[SYNTAX.ID] = line.find(SYNTAX.ID)
 				idInLine = True
 			else:
 				idInLine = False
 
 
-			# Grab keyword
+
+			#########################
+			# Grab keyword.
+			# If the line isn't commented out, grab the keyword. 
+			#########################
 			if(keyword != HASH.COMMENT):
 				try:
 					keyword = line[0:sorted(dic.values())[0]].lstrip().rstrip()
@@ -186,7 +193,10 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 
 
-			# Grab innerText
+			#########################
+			# Grab innerText.
+			# <h1>INNERTEXT GOES HERE</h1>
+   			#########################
 			try:
 				innerText = line.split(SYNTAX.SEPARATOR)[1].lstrip().rstrip()
 				if(SYNTAX.TAG_ATTRIBUTE in innerText): # is there a tag attribute seq in line?
@@ -194,10 +204,9 @@ def build(input_file:str, output_file:str, formatter:bool):
 					innerText = innerText.split(SYNTAX.TAG_ATTRIBUTE)[0].lstrip().rstrip()
 
 				if(SYNTAX.VARIABLE in innerText): # is there a variable being called
-					variable = innerText.split(SYNTAX.VARIABLE)[1]
-					called_variable = str(user_variables[variable])
-					innerText = innerText.replace(f'{SYNTAX.VARIABLE}{variable}', called_variable)
-
+					variable['name'] = innerText.split(SYNTAX.VARIABLE)[1].split()[0]
+					variable['called'] = user_variables[variable['name']]
+					innerText = innerText.replace(f'{SYNTAX.VARIABLE}{variable["name"]}', str(variable['called']))
 			except Exception as err:
 				#print(err)
 				innerText = ''
@@ -210,19 +219,19 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 
 			# double handle to make sure either in in the line.
-			if classInLine: dic[SYNTAX.CLASS] = _line.find(SYNTAX.CLASS)
+			if(classInLine):
+				dic[SYNTAX.CLASS] = _line.find(SYNTAX.CLASS)
 
-			if idInLine: dic[SYNTAX.ID] = _line.find(SYNTAX.ID)
-
+			if(idInLine):
+				dic[SYNTAX.ID] = _line.find(SYNTAX.ID)
 
 
 
 			# If CLASS position value is less than the ID position value,
 			# grab then grab CLASS value first and then ID value.
 			# and Vice versa. This is purely for esthetics.
-			if(classInLine and idInLine) == True: 
+			if(classInLine and idInLine == True): 
 				if(dic[SYNTAX.CLASS] <= dic[SYNTAX.ID]):
-					#print(_line.split('#'))
 					idName = _line.split(SYNTAX.ID)[1]
 
 					className = _line[1:dic[SYNTAX.ID]]
@@ -352,41 +361,31 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 
 					case 'var': # @var | string test = This is a test!
-						line = line.replace('=', ' = ')
-						line = line.replace('+', ' + ')
-						line = line.replace('-', ' - ')
-						variable_type  = line.split()[2]
-						variable_name  = line.split()[3]
-						operator = line.split()[4]
-						variable_value = line.split()[5]
-
+						line = line.replace('=', ' = ').replace('+', ' + ').replace('-', ' - ')
+						variable['type']  = line.split()[2]
+						variable['name']  = line.split()[3]
+						variable['operator'] = line.split()[4]
+						variable['value'] = line.split()[5]
 						
-						match variable_type:
+						match str(f"{variable['type']}"):
 							case 'int':
-								variable_value = int(variable_value)
+								variable['value'] = int(variable['value'])
 
 							case 'string':
-								variable_value = line.split('"')[1]
-								variable_value = variable_value.replace('"', '')
-								variable_value = str(variable_value)
+								variable['value'] = line.split('"')[1].replace('"', '')
+								variable['value'] = str(variable['value'])
 
-						if(operator == '='):
-							user_variables[variable_name] = variable_value
+						if(variable['operator'] == '='):
+							user_variables[variable['name']] = variable['value']
 						
-						if(variable_name in user_variables):
-							match operator:
+						if(variable['name'] in user_variables):
+							match variable['operator']:
 								case '+':
-									user_variables[variable_name] += variable_value
+									user_variables[variable['name']] += variable['value']
+
 
 								case '-':
-									user_variables[variable_name] -= variable_value
-
-
-
-						#c.print(user_variables)
-
-
-
+									user_variables[variable['name']] -= variable['value']
 
 
 					case 'inject':
@@ -440,7 +439,6 @@ def build(input_file:str, output_file:str, formatter:bool):
 			# Write the pretty HTML content back to the file
 			with open(output_file, 'w') as f:
 				f.write(BeautifulSoup(html_content, 'html.parser').prettify(formatter = 'html'))
-
 
 
 
