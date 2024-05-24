@@ -1,0 +1,95 @@
+Implemented a new update procedure:
+Updates will no longer be incorporated directly into the main.py file.
+
+Instead, they will be stored in the LOG.txt file.
+Each update, including this one, will have its own branch.
+
+
+
+
+[======= NEW FEATURES AND BUG FIXES =======]
++ Cleaned up code a little bit. I discovered that I can use the '.strip()'
+command instead of having to use '.lstrip().rstrip()'
+
+
++ Resolved an issue where a div couldn't be properly closed using the
+SYNTAX.CLOSE command with a self-closing tag.
+
+
++ Corrected a spelling mistake in the error display.
+
+
++ Added new Tags:
+textarea, object, iframe, map, abbr, acronym, address, article, form
+
+
++ Fixed new lines.
+You can now use new lines in your code.
+h1 | Hello /n World!
+
+
++ Added better commenting.
+I fixed a bug where I broke script comments.
+I changed the HTML comments to ( -- ),
+& SiHTML comments are now set to ( // ).
+
+
+
+
+
+[======= SUBJECT TO CHANGE / RECLASSIFICATION OF ERRORS =======]
+! All @commands and tags require the syntax separator to take values.
+This will be changed in the next couple of versions.
+@set | SYNTAX.CLASS ..
+
+This now longer seen as an error or a bug, this is now intentional.
+and this entry will be removed in the next update.
+
+
+
+
+
+[======= KNOWN BUGS AND ERRORS =======]
+x Lists (ol & ul) are currently unable to receive tag attributes.
+This is considered a low-priority fix.
+
+
+x Enabled the use of variables in lists; however, they cannot include
+text simultaneously at this time.
+This is categorized as a high-priority fix.
+
+
+x I have added some code that does nothing as of yet, this
+will get proper functionality in the next update.
+(This is related to variables in lists).
+
+
+
+
+[======= SIDE NOTES / PLANS =======]
+? This entire project is subject to a full rewrite.
+This project is over 500+ lines long and doesn't have proper
+code documentation.
+
+? I want to change how variables work.
+Nothing super major.
+
+
+? I want add multiline comments.
+This is a low priority.
+
+
+? I want to add ALL HTML tags.
+This is high priority.
+
+
+? I want to clean and refactor code where it is needed.
+Including better commenting.
+This is high priority.
+
+
+? I want to create a user manual for the language.
+This is high priority.
+
+
+? I want to try and get people to use/test the language.

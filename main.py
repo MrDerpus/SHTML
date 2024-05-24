@@ -1,55 +1,19 @@
 '''
 Author: MrDerpus
 
-Version: 2.1.1 -A
+Version: 2.2.0 -A
 
 Dev / compatibility conditions:
 Fedora  38 Python 3.12.1
 Windows 10 Python 3.12.2
-
-
-+ Fixed a small bug that would ignore changes made to developer
-defined syntax changes for CLASS and ID.
-
-+ Added better comments for easier readability.
-
-+ Removed some variables regarding user defined variables.
-
-+ Refactored code for user declared variables.
-
-+ Fixed a bug where the text wouldn't be displayed to the page
-if there was text after a variable in a tag.
-
-
-x All @commands and tags require the syntax separator to take values.
-This will be changed in the next couple of versions.
-@set | SYNTAX.CLASS ..
-
-x The child element is unable to receive tag attributes as of yet.
-This is a low priority fix.
-
-x / ?  Variables can only be used in the text display as of now, this does not include
-lists either.  I plan to update this so you can use variables anywhere within tags.
-
-
-? I want to add more HTML tags.
-
-? I want to clean and refactor code where it is needed.
-Including better commenting.
-
-? I want to update the github Readme.md description.
-
-? I want to create a user manual for the language.
-
-? I want to try and get people to use/test the language.
 '''
 
-from rich.traceback import install; install(show_locals = True)
-from rich.console   import Console; c = Console()
+from rich.traceback import install; install(show_locals = True) # type: ignore
+from rich.console   import Console; c = Console() # type: ignore
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup # type: ignore
 
-import click
+import click # type: ignore
 
 import sys
 import os
@@ -58,7 +22,7 @@ from settings import HASH, COMMENTS, SYNTAX, VALID
 
 
 #Version program,
-version = '2.1.1 -A'
+version = '2.2.0 -A'
 
 # custom function to test if a string is wrapped in a specific char.
 # remove for version 0.0.3 - never used.
@@ -99,6 +63,9 @@ def build(input_file:str, output_file:str, formatter:bool):
 	line_count:int = 1 # Line number
 	keyword:str = ''   # Gets compared with various keyword lists.
 	previous_keyword:str = '' # 
+
+	# comments
+	comment:dict = {'type': 0, 'chars':''} # 0: No comment, 1: HTML comment, 2: Script comment
 
 	# Variable data, name of, type of, value of, operator assigned to & called.
 	variable = {'name': '', 'type': '', 'value': '', 'operator': '', 'called': ''}
@@ -145,23 +112,26 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 		
 		for line in infile:
-			line = line.lstrip().rstrip() # Cleanse line and grab keyword.
+			line = line.strip() # Cleanse line and grab keyword.
 
 			# is line a comment?
-			comment = len(line) >= 1
-			if(comment and line[0] == COMMENTS.SINGLE_LINE_SCRIPT):  # comment for script itself.
+			#is_comment = len(line) >= 1 # return True or False.
+			comment['chars'] = line[0:2]
+			if(comment['chars'] == COMMENTS.SINGLE_LINE_SCRIPT):  # comment for script itself.
 				keyword = HASH.COMMENT
+				comment['type'] = 2
 				converted_line = ''
-			else:
-				keyword = ''
+				innerText = ''
 			
-			if(comment and line[0:2] == COMMENTS.SINGLE_LINE_HTML): # html comment.
+			elif(comment['chars'] == COMMENTS.SINGLE_LINE_HTML): # html comment.
 				keyword = HASH.COMMENT
-				innerText = line[2:].lstrip().rstrip()
+				comment['type'] = int(1)
+				innerText = line[2:].strip()
 			else:
 				keyword = ''
 
-
+			#print(line[0:2], end = ' ')
+			#print(comment)
 			# Are class and id called in line?
 			# If so, then grab string positions
 			# and set bools to true. If not, set
@@ -187,9 +157,9 @@ def build(input_file:str, output_file:str, formatter:bool):
 			#########################
 			if(keyword != HASH.COMMENT):
 				try:
-					keyword = line[0:sorted(dic.values())[0]].lstrip().rstrip()
+					keyword = line[0:sorted(dic.values())[0]].strip()
 				except:
-					keyword = line.split(SYNTAX.SEPARATOR)[0].lstrip().rstrip().lower()
+					keyword = line.split(SYNTAX.SEPARATOR)[0].strip().lower()
 
 
 
@@ -198,15 +168,27 @@ def build(input_file:str, output_file:str, formatter:bool):
 			# <h1>INNERTEXT GOES HERE</h1>
    			#########################
 			try:
-				innerText = line.split(SYNTAX.SEPARATOR)[1].lstrip().rstrip()
+				innerText = line.split(SYNTAX.SEPARATOR)[1].strip()
+				
+				if('/n' in innerText): # New line in elements
+					innerText = innerText.replace('/n', '<br>')
+				
+				
 				if(SYNTAX.TAG_ATTRIBUTE in innerText): # is there a tag attribute seq in line?
 					other_tag_Args += f'{innerText.split(SYNTAX.TAG_ATTRIBUTE)[1]}'
-					innerText = innerText.split(SYNTAX.TAG_ATTRIBUTE)[0].lstrip().rstrip()
+					innerText = innerText.split(SYNTAX.TAG_ATTRIBUTE)[0].strip()
 
 				if(SYNTAX.VARIABLE in innerText): # is there a variable being called
 					variable['name'] = innerText.split(SYNTAX.VARIABLE)[1].split()[0]
 					variable['called'] = user_variables[variable['name']]
-					innerText = innerText.replace(f'{SYNTAX.VARIABLE}{variable["name"]}', str(variable['called']))
+					
+					innerText =\
+					innerText.replace(f'{SYNTAX.VARIABLE}{variable["name"]}',
+					str(variable['called']))
+
+				#if(SYNTAX.CLOSE in innerText): # closing tag
+				#	innerText = innerText.replace(SYNTAX.CLOSE, '').strip()
+
 			except Exception as err:
 				#print(err)
 				innerText = ''
@@ -214,7 +196,7 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 
 			# Grab tag elements
-			_line = line.replace(keyword, '').split(SYNTAX.SEPARATOR)[0].lstrip().rstrip()
+			_line = line.replace(keyword, '').split(SYNTAX.SEPARATOR)[0].strip()
 			_line = _line.replace(' ', '')
 
 
@@ -263,14 +245,30 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 			# Output tags depending on the type as defined.
 			if(keyword in VALID.HTML_SELF_CLOSING):
-				converted_line = f'<{keyword} {tag_args}/>'
 
+				#innerText = innerText.replace(' ' , '')
+				#innerText = innerText.strip()
 
+				if(keyword == 'img'):
+					converted_line = f'<{keyword} {tag_args} src="{innerText}" />'
+				else:
+					converted_line = f'<{keyword} {tag_args}/>'
+
+				if(SYNTAX.CLOSE in converted_line):
+					converted_line = converted_line.replace(SYNTAX.CLOSE, '')
+					converted_line += f'\n</{previous_keyword}>'
+
+				
+
+			# I HAVE BROKEN ANCHOR TAGS!!!
 			elif(keyword in VALID.HTML_INTERVENTION):
+				#if(keyword == 'a'):
+				#	converted_line = f'<{keyword} {tag_args} href="{innerText.split(SYNTAX.SEPARATOR)[0].split(SYNTAX.TAG_ATTRIBUTE)[1]}"></{keyword}>'
+				#else:
 				converted_line = f'<{keyword} {tag_args}>{innerText}</{keyword}>'
 
 				if(SYNTAX.CLOSE in innerText): # closing tag
-					innerText = innerText.replace(SYNTAX.CLOSE, '').lstrip().rstrip()
+					innerText = innerText.replace(SYNTAX.CLOSE, '').strip()
 					#innerText += f'</{previous_keyword}>'
 
 					converted_line = f'<{keyword} {tag_args}>{innerText}</{keyword}>\n</{previous_keyword}>'
@@ -288,17 +286,46 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 				# Is the line a list?
 				if(custom == 'ol' or custom == 'ul'):
-					child = line.split('>')[1]
-					child = child.split(SYNTAX.SEPARATOR)[0]
+					child = line.split(SYNTAX.CHILD)[1].strip()
+					child = child.split(SYNTAX.SEPARATOR)[0].strip()
 
-					tag_args = tag_args.replace(f'>{child}', '').lstrip().rstrip()
+					tag_args = tag_args.replace(f'>{child}', '').strip()
 
 					converted_line = f'<{custom} {tag_args}>\n'
 
 					items = line.split(SYNTAX.SEPARATOR)[1:]
-					for i in range(len(items)): # sanitise items, get rid of whitespace.
-						items[i] = items[i].lstrip().rstrip()
-						converted_line += f'<{child}>{items[i]}</{child}>\n'
+					for i in range(len(items)): # sanitise items, get rid of whitespace, check for vars.
+						items[i] = items[i].strip()
+		
+
+						#get variables from line
+						filter_list:list = items[i].split() 
+						for x in range(len(filter_list)):
+							if(filter_list[x][0] == SYNTAX.VARIABLE):
+								filter_list[x] = filter_list[x][1:]
+								#c.print(filter_list[x])
+						#c.print(line_count)
+						# ^^^ This code above does nothing but print ot the screen
+
+						
+						
+					#Items is being turned from the KEY to VALUE
+					
+
+						# Are there variables in the list?
+						# This is a mess and need's refactoring.
+						if(items[i][1:] in user_variables):
+							#__variable = items[i][1]
+
+							items[i] =\
+							items[i].replace(f'{SYNTAX.VARIABLE}{items[i][1]}',
+							str({user_variables[items[i][1]]})).strip()
+							
+							converted_line += f'<{child}>{str(items[i][1])}</{child}>\n'
+						else:
+							converted_line += f'<{child}>{items[i]}</{child}>\n'
+							#print(items[i])
+
 
 					converted_line += f'</{custom}>'
 
@@ -396,12 +423,13 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 
 			elif(keyword == HASH.COMMENT): # comment
-				converted_line = f'<!-- {line[2:]} -->'
+				if(comment['type'] == 1):
+					converted_line = f'<!-- {line[2:]} -->'
 
 
 			else: # Some unknown error, or a blank space in document.
 				if(len(keyword) > 0):
-					ERROR(f'Unknown keyword or command \'{keyword}\'', line_count, 'The keyword you specified is invalid, please check you spelling.', False)
+					ERROR(f'Unknown keyword or command \'{keyword}\'', line_count, 'The keyword you specified is invalid, please check your spelling.', False)
 				converted_line = ''
 
 
@@ -409,6 +437,8 @@ def build(input_file:str, output_file:str, formatter:bool):
 
 
 			dic = {} # refresh dict for fresh new line draw.
+			comment['type'] = 0
+			comment['chars'] = ''
 			other_tag_Args = ''
 			# Write to file
 			if(len(converted_line) > 0):
@@ -424,6 +454,7 @@ def build(input_file:str, output_file:str, formatter:bool):
 		# automatically.
 		with open(output_file, 'a') as outfile:
 			outfile.write('</body>\n</html>')
+		#c.print(user_variables)
 			
 		
 

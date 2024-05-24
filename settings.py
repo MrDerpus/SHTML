@@ -1,7 +1,7 @@
 
 class COMMENTS:
-	SINGLE_LINE_SCRIPT:str = '/'
-	SINGLE_LINE_HTML:str   = '//'
+	SINGLE_LINE_SCRIPT:str = '//'
+	SINGLE_LINE_HTML:str   = '--'
 
 
 
@@ -17,7 +17,7 @@ class SYNTAX: # syntax settings that users can change.
 	FUNCTION:str = '@'
 	VARIABLE:str = '$'
 
-	CHILD:str = '>'
+	CHILD:str = '>' # This is only used in lists.
 
 
 
@@ -40,16 +40,16 @@ class HASH: # Hashes, because it's very unlikely for a person to type in a full 
 class VALID: # Valid HTML tags and language commands.
 	# HTML tags -----------
 	# HTML tags that are self closing. Example: <link rel="stylesheet" type="text/css" href="styles.css" /> # everything after 'keygen' is not supported in HTML5.
-	HTML_SELF_CLOSING:list = ['area','base','br','col','embed','hr','img','input','meta','param','source','track','wbr','keygen','command','menuitem','frame']
-
+	HTML_SELF_CLOSING:list = ['area','base','br','col','embed','hr','img','input','meta','param','source', 'map', 'track','wbr','keygen','command','menuitem','frame']
+	
 	# HTML tags that are not self closing, but need intervention. Example: <div id="idName">
-	HTML_NON_INTERVENTION:list = ['div','span', 'head']
+	HTML_NON_INTERVENTION:list = ['div','span', 'head', 'abbr', 'acronym', 'address', 'article']
 
 	# HTML tags that are not self closing, but DON'T need intervention. Example: <h1 id="idName">Hello World!</h1>
-	HTML_INTERVENTION:list = ['title', 'h1','h2','h3','h4','h5','h6','p','b','s','u', 'a', 'label']
+	HTML_INTERVENTION:list = ['title', 'h1','h2','h3','h4','h5','h6','p', 'a', 'label', 'textarea', 'object', 'form', 'iframe']
 
 	# Blocked HTML tags.
-	HTML_BLOCKED:list = ['style']
+	HTML_BLOCKED:list = ['style', 'b','s','u','i', 'strong']
 
 	#HTML_CUSTOM:dict = {'style':'<link rel="stylesheet" type="text/css" href="{innerText}" />', }
 	# Tags that are customised in the main.py file

@@ -1,37 +1,58 @@
+-- HTML COMMENT, can bee seen in HTML document!
+// SCRIPT COMMENT, can only been seen in SiHTML scripts!
+
 html
 	head
-		title | lol
+		title | WEBPAGE
+		icon  | icon.png
 		stylesheet | styles.css
-		icon | icon.png
-		//script.class#id|scripts.js ~% onload="functions();""
+
 
 	body.class#id
-		//h2.class|Hello World
-		//h1#id-1|Hello World!
-		//h2 #id-2|Hello World! ~% style="text-decoration: underline;"
-		//h3 #id-3 |Hello World!
-		//h4 #id-4 | Hello World!
+		
+		@var | string version = "2.2.0 -A"
 
-		// vars
-		@var | int number = 0
-		p | $number This will not work, Do I work? ~% style="color:#0f0;"
-		// ^^^
 
-		@var | int number + 3
-		p | This one will work $number ~% style="color:#ff0;"
-		h1 #id-2| Custom variables: $number lol ~% style="text-decoration: underline;"
-		// vars
+		h1 | SiHTML v$version
+		br
 
+
+
+		h1#id-1|Hello World!
+		h2 #id-2|Hello World! ~% style="text-decoration: underline;"
+
+
+		a | yay ~% href="google.com" style="color: #f0b;"
+		img | icon.png
+
+
+		// You can change some language syntax depending
+		// on how you would like it to look.
 		@set | SYNTAX.CLOSE ~#
 
 		div.cen | ~% style="background-color:#444;"
 			h5#id-5|Hello World!
 			h6#id-6|Hello World! ~#
-
 		@set | SYNTAX.CLOSE ~;
 
-		ul#id-4>li| Hello | World | I hope | This | Works
 
-		ol#id-1>li| Hello | World | I hope | This | Works
+		@inject | <h1>You can inject proper HTML using the @inject function</h1>
+
+		// Setting Variables
+		@var | int a = 0
+		@var | int b = 1
+		@var | int c = 2
+		@var | int d = 3
+		@var | int e = 4
+
+		// Displaying variables
+		ul #id-4 > li| $a | $b | $c | $d | $e
+		ul#id-1>li | $a | $b | $c this is a test | $d | $e
+		p | for now, you are unable to have text and variables in the same list element.
+
+
+		ul#id-3>li| Hello | World | I hope | This | Works
+
+		//ol#id-1>li| hello |  World | I hope | This | Works
 
 		p|Hello World! /n lol
